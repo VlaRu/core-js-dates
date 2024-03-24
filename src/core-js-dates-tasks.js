@@ -111,8 +111,12 @@ function getCountDaysInMonth(month, year) {
  * '2024-02-01T00:00:00.000Z', '2024-02-02T00:00:00.000Z'  => 2
  * '2024-02-01T00:00:00.000Z', '2024-02-12T00:00:00.000Z'  => 12
  */
-function getCountDaysOnPeriod(/* dateStart, dateEnd */) {
-  throw new Error('Not implemented');
+function getCountDaysOnPeriod(dateStart, dateEnd) {
+  const start = new Date(dateStart);
+  const end = new Date(dateEnd);
+  const differenceInMilliseconds = end - start;
+  const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+  return differenceInDays + 1;
 }
 
 /**
@@ -132,8 +136,11 @@ function getCountDaysOnPeriod(/* dateStart, dateEnd */) {
  * '2024-02-02', { start: '2024-02-02', end: '2024-03-02' } => true
  * '2024-02-10', { start: '2024-02-02', end: '2024-03-02' } => true
  */
-function isDateInPeriod(/* date, period */) {
-  throw new Error('Not implemented');
+function isDateInPeriod(date, period) {
+  const startDate = new Date(period.start);
+  const endDate = new Date(period.end);
+  const checkDate = new Date(date);
+  return checkDate >= startDate && checkDate <= endDate;
 }
 
 /**
@@ -147,8 +154,22 @@ function isDateInPeriod(/* date, period */) {
  * '1999-01-05T02:20:00.000Z' => '1/5/1999, 2:20:00 AM'
  * '2010-12-15T22:59:00.000Z' => '12/15/2010, 10:59:00 PM'
  */
-function formatDate(/* date */) {
-  throw new Error('Not implemented');
+function formatDate(date) {
+  const options = {
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true,
+    timeZone: 'UTC',
+  };
+
+  const formattedDate = new Intl.DateTimeFormat('en-US', options).format(
+    new Date(date)
+  );
+  return formattedDate;
 }
 
 /**
@@ -163,8 +184,22 @@ function formatDate(/* date */) {
  * 12, 2023 => 10
  * 1, 2024 => 8
  */
-function getCountWeekendsInMonth(/* month, year */) {
-  throw new Error('Not implemented');
+function getCountWeekendsInMonth(month, year) {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+
+  let count = 0;
+  for (
+    let date = startDate;
+    date <= endDate;
+    date.setDate(date.getDate() + 1)
+  ) {
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      count += 1;
+    }
+  }
+  return count;
 }
 
 /**
@@ -195,10 +230,31 @@ function getWeekNumberByDate(/* date */) {
  * Date(2024, 0, 13) => Date(2024, 8, 13)
  * Date(2023, 1, 1) => Date(2023, 9, 13)
  */
-function getNextFridayThe13th(/* date */) {
-  throw new Error('Not implemented');
-}
+function getNextFridayThe13th(date) {
+  const [year, month, day] = [
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ];
+  let currentMonth = month;
+  let currentYear = year;
 
+  if (day >= 13) {
+    currentMonth += 1;
+  }
+
+  while (true) {
+    const currentDate = new Date(currentYear, currentMonth, 13);
+    if (currentDate.getDay() === 5) {
+      return currentDate;
+    }
+    currentMonth += 1;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear += 1;
+    }
+  }
+}
 /**
  * Returns the quarter of the year for a given date.
  *
@@ -210,8 +266,19 @@ function getNextFridayThe13th(/* date */) {
  * Date(2024, 5, 1) => 2
  * Date(2024, 10, 10) => 4
  */
-function getQuarter(/* date */) {
-  throw new Error('Not implemented');
+function getQuarter(date) {
+  const month = date.getMonth() + 1;
+
+  if (month >= 1 && month <= 3) {
+    return 1;
+  }
+  if (month >= 4 && month <= 6) {
+    return 2;
+  }
+  if (month >= 7 && month <= 9) {
+    return 3;
+  }
+  return 4;
 }
 
 /**
@@ -232,8 +299,33 @@ function getQuarter(/* date */) {
  * { start: '01-01-2024', end: '15-01-2024' }, 1, 3 => ['01-01-2024', '05-01-2024', '09-01-2024', '13-01-2024']
  * { start: '01-01-2024', end: '10-01-2024' }, 1, 1 => ['01-01-2024', '03-01-2024', '05-01-2024', '07-01-2024', '09-01-2024']
  */
-function getWorkSchedule(/* period, countWorkDays, countOffDays */) {
-  throw new Error('Not implemented');
+function formatDate1(date) {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+function getWorkSchedule(period, countWorkDays, countOffDays) {
+  function parseDate(dateString) {
+    const [day, month, year] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const startDate = parseDate(period.start);
+  const endDate = parseDate(period.end);
+  const schedule = [];
+
+  const currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    for (let i = 0; i < countWorkDays && currentDate <= endDate; i += 1) {
+      schedule.push(formatDate1(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    for (let i = 0; i < countOffDays && currentDate <= endDate; i += 1) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  return schedule;
 }
 
 /**
@@ -248,8 +340,9 @@ function getWorkSchedule(/* period, countWorkDays, countOffDays */) {
  * Date(2022, 2, 1) => false
  * Date(2020, 2, 1) => true
  */
-function isLeapYear(/* date */) {
-  throw new Error('Not implemented');
+function isLeapYear(date) {
+  const year = date.getFullYear();
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
 
 module.exports = {
