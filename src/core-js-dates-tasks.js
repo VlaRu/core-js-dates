@@ -243,7 +243,7 @@ function getNextFridayThe13th(date) {
     currentMonth += 1;
   }
 
-  while (true) {
+  while (currentMonth <= 11) {
     const currentDate = new Date(currentYear, currentMonth, 13);
     if (currentDate.getDay() === 5) {
       return currentDate;
@@ -254,6 +254,7 @@ function getNextFridayThe13th(date) {
       currentYear += 1;
     }
   }
+  return null;
 }
 /**
  * Returns the quarter of the year for a given date.
